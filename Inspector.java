@@ -1,4 +1,5 @@
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -40,6 +41,7 @@ public class Inspector {
 		getSuperClass();
 		getInterface();
 		getMethods();
+		getConstruc();
 
 	}
 
@@ -72,7 +74,7 @@ public class Inspector {
 	/**
 	 * Prints the superclass name of objToInspect
 	 */
-	public void getSuperClass() {
+	private void getSuperClass() {
 		System.out.println("Superclass Name: \t" + objToInspect.getClass().getSuperclass().getSimpleName());
 	}
 
@@ -80,7 +82,7 @@ public class Inspector {
 	/**
 	 * Prints the interface name (if applicable) of objToInspect
 	 */
-	public void getInterface() {
+	private void getInterface() {
 
 		if(isInterface) {
 			System.out.println("Interface Name: \t" + objToInspect.getClass().isInterface());
@@ -90,7 +92,11 @@ public class Inspector {
 		}
 	}
 
-	public void getMethods() {
+	/**
+	 * Prints the name and details (exceptions, parameter type, return type, modifiers)
+	 * of all the methods of objToInspect
+	 */
+	private void getMethods() {
 
 		Method[] methods = objToInspect.getClass().getDeclaredMethods();
 		System.out.println("______________________________________________\nMethods:");
@@ -111,7 +117,7 @@ public class Inspector {
 				}
 			}
 			else System.out.print("No parameters");
-			
+
 
 			System.out.print("\n\t\t\tException Types: \t");
 			Class[] exceptions = methods[count].getExceptionTypes();
@@ -135,11 +141,42 @@ public class Inspector {
 			System.out.println("\t\t\tModifiers: \t\t" + Modifier.toString(methods[count].getModifiers()));
 
 			System.out.println("\n");
-			
+
 		}
 
 
 	}
 
+	/**
+	 * Prints the name and the parameter type and modifiers of
+	 * the constructors of objToInspect
+	 */
+	private void getConstruc() {
+
+		Constructor[] construc = objToInspect.getClass().getDeclaredConstructors();
+
+		System.out.println("______________________________________________\nConstructors:");
+		for(int count = 0; count < construc.length; count++) {
+
+			System.out.println("\t\t\t* " + construc[count].getName() + " *");
+
+			int numParam = construc[count].getParameterCount();
+			System.out.print("\t\t\tParameter Types: \t");
+
+			if(numParam != 0) {
+				for(int count2 = 0; count2 < numParam; count2++) {
+					Class[] parameters = construc[count].getParameterTypes();
+					System.out.print(parameters[count2].getSimpleName());
+					
+					if(count2 != (numParam-1)) System.out.print(", ");
+				}
+			}
+			
+			System.out.println("\n\t\t\tModifiers: \t\t" + Modifier.toString(construc[count].getModifiers()));
+
+			System.out.println("\n");
+			
+		}
+	}
 
 }
