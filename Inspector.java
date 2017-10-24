@@ -1,5 +1,6 @@
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -10,13 +11,14 @@ import java.lang.reflect.Modifier;
 public class Inspector {
 
 	private Object objToInspect;
+	private String superClassName, interfaceName;
 	private boolean recursiveFlag;
 	private boolean isArray;
 	private boolean isInterface;
 	private boolean isPrimitive;
 
 
-	public void inspect(Object obj, boolean recursive) throws ClassNotFoundException {
+	public void inspect(Object obj, boolean recursive) throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException {
 
 		this.objToInspect = obj;
 
@@ -42,6 +44,7 @@ public class Inspector {
 		getInterface();
 		getMethods();
 		getConstruc();
+		getFields();
 
 	}
 
@@ -75,7 +78,9 @@ public class Inspector {
 	 * Prints the superclass name of objToInspect
 	 */
 	private void getSuperClass() {
-		System.out.println("Superclass Name: \t" + objToInspect.getClass().getSuperclass().getSimpleName());
+		
+		this.superClassName = objToInspect.getClass().getSuperclass().getSimpleName();
+		System.out.println("Superclass Name: \t" + superClassName);
 	}
 
 
@@ -84,11 +89,34 @@ public class Inspector {
 	 */
 	private void getInterface() {
 
-		if(isInterface) {
-			System.out.println("Interface Name: \t" + objToInspect.getClass().isInterface());
+		
+		
+		if(objToInspect.getClass().isInterface()) {
+			
+			
+			System.out.println("Interface Name: \tThis class is an interface");
+			
+
 		}
 		else {
-			System.out.println("Interface Name: \tNo interface implemented");
+			
+			Class[] interfaces = objToInspect.getClass().getInterfaces();
+			System.out.print("Interface Name: \t");
+			
+			int numInterface = interfaces.length;
+			
+			// Prints out all interface names
+			for(int count = 0; count < interfaces.length; count++) {
+				
+				System.out.print(interfaces[count].getName());
+				
+				// Prints out a comma if there are more interfaces
+				if(count < (numInterface-1)) System.out.print(", ");
+				
+			}
+			
+			System.out.println("\n");
+
 		}
 	}
 
@@ -156,6 +184,7 @@ public class Inspector {
 		Constructor[] construc = objToInspect.getClass().getDeclaredConstructors();
 
 		System.out.println("______________________________________________\nConstructors:");
+
 		for(int count = 0; count < construc.length; count++) {
 
 			System.out.println("\t\t\t* " + construc[count].getName() + " *");
@@ -167,16 +196,73 @@ public class Inspector {
 				for(int count2 = 0; count2 < numParam; count2++) {
 					Class[] parameters = construc[count].getParameterTypes();
 					System.out.print(parameters[count2].getSimpleName());
-					
+
 					if(count2 != (numParam-1)) System.out.print(", ");
 				}
 			}
-			
+			else System.out.print("No parameters");
+
 			System.out.println("\n\t\t\tModifiers: \t\t" + Modifier.toString(construc[count].getModifiers()));
 
 			System.out.println("\n");
-			
+
 		}
 	}
 
+	private void getFields() throws IllegalArgumentException, IllegalAccessException {
+
+		
+		Field[] fields = objToInspect.getClass().getDeclaredFields();
+
+		System.out.println("______________________________________________\nFields:");
+
+		for(int count = 0; count < fields.length; count++) {
+
+			fields[count].setAccessible(true);
+			String fieldName = fields[count].getName();
+			Object value = fields[count].get(objToInspect);
+
+			if(value.getClass().isArray()) {
+
+				System.out.println("Type ARAAAAAAAAAAAAAAAAAAAAAY");
+				/*
+				 * Print out contents of array, other stuff
+				 */
+				
+			}
+			else {
+				
+				System.out.println("\t\t\t\t- " + fieldName + " -");
+				System.out.print("\t\t\tType: \t\t\t" + fields[count].getType());
+				System.out.print("\n\t\t\tModifiers: \t\t" + Modifier.toString(fields[count].getModifiers()));
+
+
+				/*
+				 * If recursiveFlag is true, perform recursive check on fields which are objects
+				 * else prints out information on object
+				 */
+				if(recursiveFlag) {
+					/*
+					 * Inspect object if it is a field
+					 */
+
+				}
+				else {
+
+					System.out.print("\n\t\t\tValue: \t\t\t" + fields[count].get(objToInspect));
+					System.out.print("\n\t\t\tReference Value: \t" + fields[count].getDeclaringClass() + " " + System.identityHashCode(fields[count].get(objToInspect)));
+
+				}
+			}
+
+
+
+			System.out.println("\n");
+
+		}
+
+
+
+
+	}
 }
