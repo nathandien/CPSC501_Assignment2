@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 
 /**
  * @author nathan
@@ -12,7 +13,7 @@ import java.lang.reflect.Modifier;
 public class Inspector {
 
 	private Object objToInspect;
-	private String superClassName, interfaceName;
+	private Class superClass;
 	private Class[] interfaces;
 	private boolean recursiveFlag;
 	private boolean isArray;
@@ -20,9 +21,10 @@ public class Inspector {
 	private boolean isPrimitive;
 
 
-	public void inspect(Object obj, boolean recursive) throws ClassNotFoundException, IllegalArgumentException, IllegalAccessException {
+	public void inspect(Object obj, boolean recursive) throws Exception {
 
 		this.objToInspect = obj;
+		this.recursiveFlag = recursive;
 
 
 
@@ -42,11 +44,13 @@ public class Inspector {
 		 */
 
 		getClassName();
-		getSuperClass();
-		getInterface();
-		getMethods();
+		getSupName();
+		getInterfName();
+		Method[] methods = objToInspect.getClass().getDeclaredMethods();
+		getMethods(methods);
 		getConstruc();
 		getFields();
+		travInher();
 
 	}
 
@@ -79,42 +83,47 @@ public class Inspector {
 	/**
 	 * Prints the superclass name of objToInspect
 	 */
-	private void getSuperClass() {
-		
-		this.superClassName = objToInspect.getClass().getSuperclass().getSimpleName();
-		System.out.println("Superclass Name: \t" + superClassName);
+	private void getSupName() {
+
+		this.superClass = objToInspect.getClass().getSuperclass();
+		if(superClass.getSimpleName().equals("Object")) {
+			System.out.println("Superclass Name: \tNo superclass");
+		}
+		else {
+			System.out.println("Superclass Name: \t" + superClass.getSimpleName());
+		}
 	}
 
 
 	/**
 	 * Prints the interface name (if applicable) of objToInspect
 	 */
-	private void getInterface() {
+	private void getInterfName() {
 
 		if(objToInspect.getClass().isInterface()) {
-			
-			
+
+
 			System.out.println("Interface Name: \tThis class is an interface");
-			
+
 
 		}
 		else {
-			
+
 			this.interfaces = objToInspect.getClass().getInterfaces();
 			System.out.print("Interface Name: \t");
-			
+
 			int numInterface = interfaces.length;
-			
+
 			// Prints out all interface names
 			for(int count = 0; count < interfaces.length; count++) {
-				
+
 				System.out.print(interfaces[count].getName());
-				
+
 				// Prints out a comma if there are more interfaces
 				if(count < (numInterface-1)) System.out.print(", ");
-				
+
 			}
-			
+
 			System.out.println("\n");
 
 		}
@@ -124,55 +133,59 @@ public class Inspector {
 	 * Prints the name and details (exceptions, parameter type, return type, modifiers)
 	 * of all the methods of objToInspect
 	 */
-	private void getMethods() {
-
-		Method[] methods = objToInspect.getClass().getDeclaredMethods();
-		System.out.println("______________________________________________\nMethods:");
-		for(int count = 0; count < methods.length; count++) {
-
-			System.out.println("\t\t\t< " + methods[count].getName() + " >");
+	private void getMethods(Method[] methods) {
 
 
-			int numParam = methods[count].getParameterCount();
-			System.out.print("\t\t\tParameter Types: \t");
-			// Prints out all parameter types (if any)
-			if(numParam != 0) {
-				for(int count2 = 0; count2 < numParam; count2++) {
-					Class[] parameters = methods[count].getParameterTypes();
-					System.out.print(parameters[count2].getSimpleName());
-					// Prints a comma for formatting purposes
-					if(count2 < (numParam-1)) System.out.print(", ");
+		System.out.print("______________________________________________\nMethods:");
+		// Checks to see if there is any methods to print
+		if(methods.length == 0) System.out.print("\t\tNo methods");
+		else {
+			System.out.print("\n");
+			for(int count = 0; count < methods.length; count++) {
+
+				System.out.println("\t\t\t< " + methods[count].getName() + " >");
+
+
+				int numParam = methods[count].getParameterCount();
+				System.out.print("\t\t\tParameter Types: \t");
+				// Prints out all parameter types (if any)
+				if(numParam != 0) {
+					for(int count2 = 0; count2 < numParam; count2++) {
+						Class[] parameters = methods[count].getParameterTypes();
+						System.out.print(parameters[count2].getSimpleName());
+						// Prints a comma for formatting purposes
+						if(count2 < (numParam-1)) System.out.print(", ");
+					}
 				}
-			}
-			else System.out.print("No parameters");
+				else System.out.print("No parameters");
 
 
-			System.out.print("\n\t\t\tException Types: \t");
-			Class[] exceptions = methods[count].getExceptionTypes();
-			int numExcep = exceptions.length;
-			// Prints out all exception types (if any)
-			if(numExcep != 0) {
-				for(int count3 = 0; count3 < numExcep; count3++) {
-					System.out.print(exceptions[count3].getSimpleName());
-					if(count3 < (numExcep-1)) System.out.print(", ");
+				System.out.print("\n\t\t\tException Types: \t");
+				Class[] exceptions = methods[count].getExceptionTypes();
+				int numExcep = exceptions.length;
+				// Prints out all exception types (if any)
+				if(numExcep != 0) {
+					for(int count3 = 0; count3 < numExcep; count3++) {
+						System.out.print(exceptions[count3].getSimpleName());
+						if(count3 < (numExcep-1)) System.out.print(", ");
+					}
 				}
+				else System.out.print("No exceptions thrown");
+
+
+				String returnType = methods[count].getReturnType().getSimpleName();
+				// Prints out return type (if it does return anything)
+				if(returnType.equals("void")) System.out.println("\n\t\t\tReturn Type: \t\tNo return (void)");
+				else System.out.println("\n\t\t\tReturn Type: \t\t" + methods[count].getReturnType().getSimpleName());
+
+
+				System.out.println("\t\t\tModifiers: \t\t" + Modifier.toString(methods[count].getModifiers()));
+
+				System.out.println("\n");
+
 			}
-			else System.out.print("No exceptions thrown");
-
-
-			String returnType = methods[count].getReturnType().getSimpleName();
-			// Prints out return type (if it does return anything)
-			if(returnType.equals("void")) System.out.println("\n\t\t\tReturn Type: \t\tNo return (void)");
-			else System.out.println("\n\t\t\tReturn Type: \t\t" + methods[count].getReturnType().getSimpleName());
-
-
-			System.out.println("\t\t\tModifiers: \t\t" + Modifier.toString(methods[count].getModifiers()));
-
-			System.out.println("\n");
 
 		}
-
-
 	}
 
 	/**
@@ -211,7 +224,7 @@ public class Inspector {
 
 	private void getFields() throws IllegalArgumentException, IllegalAccessException {
 
-		
+
 		Field[] fields = objToInspect.getClass().getDeclaredFields();
 
 		System.out.println("______________________________________________\nFields:");
@@ -222,23 +235,23 @@ public class Inspector {
 			String fieldName = fields[count].getName();
 			Object value = fields[count].get(objToInspect);
 			//Class tempClass = fields[count].getType();
-			
+
 			if(value.getClass().isArray()) {
-				
+
 				System.out.println("\t\t\t\t- " + fieldName + " -");
 				System.out.print("\t\t\tType: \t\t\t" + value.getClass().getComponentType());
 				// Gets the length of the array
 				int arrayLen = Array.getLength(value);
 				System.out.print("\n\t\t\tLength: \t\t" + arrayLen);
-				
+
 				// Prints out the contents of the array
 				System.out.print("\n\t\t\tContents: \t\t");
 				int splitCount = 0;
 				for(int countArr = 0; countArr < arrayLen; countArr++) {
-					
+
 					splitCount++;
 					System.out.print(Array.get(value, countArr));
-					
+
 					// Prints a comma for formatting purposes
 					if(countArr < (arrayLen-1)) System.out.print(", ");
 					// Prints a newline for formatting purposes
@@ -246,13 +259,13 @@ public class Inspector {
 						splitCount = 0;
 						System.out.print("\n\t\t\t\t\t\t");
 					}
-				
+
 				}
 
-				
+
 			}
 			else {
-				
+
 
 				System.out.println("\t\t\t\t- " + fieldName + " -");
 				System.out.print("\t\t\tType: \t\t\t" + fields[count].getType());
@@ -277,13 +290,44 @@ public class Inspector {
 				}
 			}
 
-
-
 			System.out.println("\n");
 
 		}
+	}
+
+	private void travInher() throws Exception {
+
+		//System.out.println(superClass.getSimpleName());
+		Class supClass = null;
+
+		if(!superClass.getSimpleName().equals("Object")) {
+			
+			System.out.println(superClass);
+			Constructor constructors = superClass.getConstructor();
+
+			Object[] tempArr = new Object[constructors.getParameterCount()];
+			for(int count = 0; count < constructors.getParameterCount(); count++) {
+				tempArr[count] = null;
+			}
+
+			Object supObj = constructors.newInstance();
+
+			inspect(supObj, recursiveFlag);
+			
+		}
+
+		if(interfaces.length != 0) {
+			for(int count = 0; count < interfaces.length; count++) {
+
+				System.out.print("\n++++++++++++++++++++++++++++++++++++++++++++++\n\n");
+				Method[] methods2 = interfaces[count].getDeclaredMethods();
+				System.out.print("Interface Name: \t" + interfaces[count].getName() + "\n");
+				getMethods(methods2);
+
+			}
 
 
+		}
 
 
 	}
