@@ -1,4 +1,5 @@
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -12,6 +13,7 @@ public class Inspector {
 
 	private Object objToInspect;
 	private String superClassName, interfaceName;
+	private Class[] interfaces;
 	private boolean recursiveFlag;
 	private boolean isArray;
 	private boolean isInterface;
@@ -89,8 +91,6 @@ public class Inspector {
 	 */
 	private void getInterface() {
 
-		
-		
 		if(objToInspect.getClass().isInterface()) {
 			
 			
@@ -100,7 +100,7 @@ public class Inspector {
 		}
 		else {
 			
-			Class[] interfaces = objToInspect.getClass().getInterfaces();
+			this.interfaces = objToInspect.getClass().getInterfaces();
 			System.out.print("Interface Name: \t");
 			
 			int numInterface = interfaces.length;
@@ -141,7 +141,7 @@ public class Inspector {
 					Class[] parameters = methods[count].getParameterTypes();
 					System.out.print(parameters[count2].getSimpleName());
 					// Prints a comma for formatting purposes
-					if(count2 != (numParam-1)) System.out.print(", ");
+					if(count2 < (numParam-1)) System.out.print(", ");
 				}
 			}
 			else System.out.print("No parameters");
@@ -154,7 +154,7 @@ public class Inspector {
 			if(numExcep != 0) {
 				for(int count3 = 0; count3 < numExcep; count3++) {
 					System.out.print(exceptions[count3].getSimpleName());
-					if(count3 != (numExcep-1)) System.out.print(", ");
+					if(count3 < (numExcep-1)) System.out.print(", ");
 				}
 			}
 			else System.out.print("No exceptions thrown");
@@ -196,8 +196,8 @@ public class Inspector {
 				for(int count2 = 0; count2 < numParam; count2++) {
 					Class[] parameters = construc[count].getParameterTypes();
 					System.out.print(parameters[count2].getSimpleName());
-
-					if(count2 != (numParam-1)) System.out.print(", ");
+					// Prints a comma for formatting purposes
+					if(count2 < (numParam-1)) System.out.print(", ");
 				}
 			}
 			else System.out.print("No parameters");
@@ -221,17 +221,39 @@ public class Inspector {
 			fields[count].setAccessible(true);
 			String fieldName = fields[count].getName();
 			Object value = fields[count].get(objToInspect);
-
+			//Class tempClass = fields[count].getType();
+			
 			if(value.getClass().isArray()) {
+				
+				System.out.println("\t\t\t\t- " + fieldName + " -");
+				System.out.print("\t\t\tType: \t\t\t" + value.getClass().getComponentType());
+				// Gets the length of the array
+				int arrayLen = Array.getLength(value);
+				System.out.print("\n\t\t\tLength: \t\t" + arrayLen);
+				
+				// Prints out the contents of the array
+				System.out.print("\n\t\t\tContents: \t\t");
+				int splitCount = 0;
+				for(int countArr = 0; countArr < arrayLen; countArr++) {
+					
+					splitCount++;
+					System.out.print(Array.get(value, countArr));
+					
+					// Prints a comma for formatting purposes
+					if(countArr < (arrayLen-1)) System.out.print(", ");
+					// Prints a newline for formatting purposes
+					if(splitCount == 10) {
+						splitCount = 0;
+						System.out.print("\n\t\t\t\t\t\t");
+					}
+				
+				}
 
-				System.out.println("Type ARAAAAAAAAAAAAAAAAAAAAAY");
-				/*
-				 * Print out contents of array, other stuff
-				 */
 				
 			}
 			else {
 				
+
 				System.out.println("\t\t\t\t- " + fieldName + " -");
 				System.out.print("\t\t\tType: \t\t\t" + fields[count].getType());
 				System.out.print("\n\t\t\tModifiers: \t\t" + Modifier.toString(fields[count].getModifiers()));
