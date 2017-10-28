@@ -17,7 +17,7 @@ public class Inspector {
 	private Class[] interfaces;
 	private boolean recursiveFlag;
 	private boolean isArray;
-	private boolean isInterface;
+	//private boolean isInterface;
 	private boolean isPrimitive;
 
 
@@ -27,29 +27,16 @@ public class Inspector {
 		this.recursiveFlag = recursive;
 
 
-
-		/* REMOVE LATER
-		this.isArray = objToInspect.getClass().isArray();
-		this.isInterface = objToInspect.getClass().isInterface();
-		this.isPrimitive = objToInspect.getClass().isPrimitive();
-
-
-		System.out.println(objToInspect.getClass().getTypeName());
-		String temp = objToInspect.getClass().getName();
-		Class tempClass = Class.forName(temp);
-		System.out.println(tempClass.getDeclaringClass());
-		//Field f = tempClass.getDeclaredFields()[0];
-		//System.out.println(f.getType());
-		 * *
-		 */
-
-		getClassName();
-		getSupName();
-		getInterfName();
+		// Method calls for inspection of particular details of objToInspect
+		getClassName(objToInspect);
+		getSupName(objToInspect, null);
+		getInterfName(objToInspect, null);
 		Method[] methods = objToInspect.getClass().getDeclaredMethods();
 		getMethods(methods);
-		getConstruc();
-		getFields();
+		Constructor[] construc = objToInspect.getClass().getDeclaredConstructors();
+		getConstruc(construc);
+		Field[] fields = objToInspect.getClass().getDeclaredFields();
+		getFields(fields);
 		travInher();
 
 	}
@@ -60,32 +47,26 @@ public class Inspector {
 	/**
 	 * Prints the class name of objToInspect (changes depending on if the object is an array and/or primitive)
 	 */
-	public void getClassName() {
-
-		System.out.println("Class Name: \t\t" + objToInspect.getClass().getName());
-
-		/*
-		if(!isPrimitive) {
-			if(isArray) {
-				System.out.println("Class Name (Array): \t" + this.objToInspect.getClass().getComponentType());
-			}
-			else {
-				System.out.println("Class Name: \t\t" + objToInspect.getClass().getSimpleName());
-			}
-		}
-		/*
-		else {
-			System.out.println("Ayyyyy \t" + this.objToInspect.getClass().getDeclaringClass());
-		}*/
+	public void getClassName(Object obj) {
+		System.out.println("Class Name: \t\t" + obj.getClass().getName());
 	}
 
 
 	/**
 	 * Prints the superclass name of objToInspect
 	 */
-	private void getSupName() {
+	private void getSupName(Object obj, Class cls) {
 
-		this.superClass = objToInspect.getClass().getSuperclass();
+		// Checks which arguments were passed
+		if(obj != null) {
+			this.superClass = obj.getClass().getSuperclass();
+		}
+		else if(cls != null) {
+			this.superClass = cls.getSuperclass();
+
+		}
+		
+		// Prints superclass name (if applicable)
 		if(superClass.getSimpleName().equals("Object")) {
 			System.out.println("Superclass Name: \tNo superclass");
 		}
@@ -96,23 +77,29 @@ public class Inspector {
 
 
 	/**
-	 * Prints the interface name (if applicable) of objToInspect
+	 * Prints the interface name (if applicable) of obj or cls
 	 */
-	private void getInterfName() {
+	private void getInterfName(Object obj, Class cls) {
 
-		if(objToInspect.getClass().isInterface()) {
-
-
-			System.out.println("Interface Name: \tThis class is an interface");
-
-
+		boolean isInterface = false;
+		// Checks which arguments were passed
+		if(obj != null) {
+			this.interfaces = obj.getClass().getInterfaces();
+			if(obj.getClass().isInterface()) isInterface = true;
 		}
-		else {
+		else if(cls != null) {
+			this.interfaces = cls.getInterfaces();
+			if(cls.isInterface()) isInterface = true;
+		}
 
-			this.interfaces = objToInspect.getClass().getInterfaces();
+		int numInterface = interfaces.length;
+
+		if(isInterface) {
+			System.out.println("Interface Name: \tThis class is an interface");
+		}
+		else if(numInterface > 0) {
+
 			System.out.print("Interface Name: \t");
-
-			int numInterface = interfaces.length;
 
 			// Prints out all interface names
 			for(int count = 0; count < interfaces.length; count++) {
@@ -127,11 +114,14 @@ public class Inspector {
 			System.out.println("\n");
 
 		}
+		else {
+			System.out.println("Interface Name: \tNo interface");
+		}
 	}
 
 	/**
 	 * Prints the name and details (exceptions, parameter type, return type, modifiers)
-	 * of all the methods of objToInspect
+	 * of all the methods of objToInspectbj.getClass().isInterface()
 	 */
 	private void getMethods(Method[] methods) {
 
@@ -175,7 +165,7 @@ public class Inspector {
 
 				String returnType = methods[count].getReturnType().getSimpleName();
 				// Prints out return type (if it does return anything)
-				if(returnType.equals("void")) System.out.println("\n\t\t\tReturn Type: \t\tNo return (void)");
+				if(returnType.equals("void")) System.out.println("\n\t\tbj.getClass().isInterface()\tReturn Type: \t\tNo return (void)");
 				else System.out.println("\n\t\t\tReturn Type: \t\t" + methods[count].getReturnType().getSimpleName());
 
 
@@ -192,9 +182,7 @@ public class Inspector {
 	 * Prints the name and the parameter type and modifiers of
 	 * the constructors of objToInspect
 	 */
-	private void getConstruc() {
-
-		Constructor[] construc = objToInspect.getClass().getDeclaredConstructors();
+	private void getConstruc(Constructor[] construc) {
 
 		System.out.println("______________________________________________\nConstructors:");
 
@@ -222,21 +210,26 @@ public class Inspector {
 		}
 	}
 
-	private void getFields() throws IllegalArgumentException, IllegalAccessException {
+	private void getFields(Field[] fields) throws IllegalArgumentException, IllegalAccessException {
 
 
-		Field[] fields = objToInspect.getClass().getDeclaredFields();
+
 
 		System.out.println("______________________________________________\nFields:");
 
 		for(int count = 0; count < fields.length; count++) {
-
+			//obj.getClass().getSuperclass();
 			fields[count].setAccessible(true);
 			String fieldName = fields[count].getName();
 			Object value = fields[count].get(objToInspect);
-			//Class tempClass = fields[count].getType();
+			boolean fieldArray = false;
 
-			if(value.getClass().isArray()) {
+			// Checks if the value is null before checking if it is an array
+			if(value != null) {
+				if(value.getClass().isArray())
+					fieldArray = true;
+			}
+			if(fieldArray) {
 
 				System.out.println("\t\t\t\t- " + fieldName + " -");
 				System.out.print("\t\t\tType: \t\t\t" + value.getClass().getComponentType());
@@ -261,7 +254,6 @@ public class Inspector {
 					}
 
 				}
-
 
 			}
 			else {
@@ -295,35 +287,39 @@ public class Inspector {
 		}
 	}
 
+	/*
+	 * Traverses class and interface hierarchy to be inspected
+	 */
 	private void travInher() throws Exception {
 
-		//System.out.println(superClass.getSimpleName());
-		Class supClass = null;
+
 
 		if(!superClass.getSimpleName().equals("Object")) {
 			
-			System.out.println(superClass);
-			Constructor constructors = superClass.getConstructor();
+			Class supClass = null;
+			System.out.println("*****Superclass: " + superClass + "*****");
 
-			Object[] tempArr = new Object[constructors.getParameterCount()];
-			for(int count = 0; count < constructors.getParameterCount(); count++) {
-				tempArr[count] = null;
-			}
+			supClass = Class.forName(superClass.getName());
 
-			Object supObj = constructors.newInstance();
+			getSupName(null, supClass);
+			getInterfName(null, supClass);
+			Method[] methods = supClass.getDeclaredMethods();
+			getMethods(methods);
+			Constructor[] construc = supClass.getDeclaredConstructors();
+			getConstruc(construc);
+			getFields(supClass.getDeclaredFields());
+			travInher();
 
-			inspect(supObj, recursiveFlag);
-			
+
 		}
-
+		// Checks that there the class has an interface to inspect
 		if(interfaces.length != 0) {
+			// Prints the methods of the interface
 			for(int count = 0; count < interfaces.length; count++) {
-
 				System.out.print("\n++++++++++++++++++++++++++++++++++++++++++++++\n\n");
 				Method[] methods2 = interfaces[count].getDeclaredMethods();
 				System.out.print("Interface Name: \t" + interfaces[count].getName() + "\n");
 				getMethods(methods2);
-
 			}
 
 
