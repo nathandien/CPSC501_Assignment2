@@ -16,15 +16,14 @@ public class Inspector {
 	private Class superClass;
 	private Class[] interfaces;
 	private boolean recursiveFlag;
-	private boolean isArray;
-	//private boolean isInterface;
-	private boolean isPrimitive;
+	private Class currClass;
 
 
 	public void inspect(Object obj, boolean recursive) throws Exception {
 
 		this.objToInspect = obj;
 		this.recursiveFlag = recursive;
+		this.currClass = obj.getClass();
 
 
 		// Method calls for inspection of particular details of objToInspect
@@ -55,7 +54,7 @@ public class Inspector {
 	/**
 	 * Prints the superclass name of objToInspect
 	 */
-	private void getSupName(Object obj, Class cls) {
+	public void getSupName(Object obj, Class cls) {
 
 		// Checks which arguments were passed
 		if(obj != null) {
@@ -79,7 +78,7 @@ public class Inspector {
 	/**
 	 * Prints the interface name (if applicable) of obj or cls
 	 */
-	private void getInterfName(Object obj, Class cls) {
+	public void getInterfName(Object obj, Class cls) {
 
 		boolean isInterface = false;
 		// Checks which arguments were passed
@@ -123,7 +122,7 @@ public class Inspector {
 	 * Prints the name and details (exceptions, parameter type, return type, modifiers)
 	 * of all the methods of objToInspectbj.getClass().isInterface()
 	 */
-	private void getMethods(Method[] methods) {
+	public void getMethods(Method[] methods) {
 
 
 		System.out.print("______________________________________________\nMethods:");
@@ -165,7 +164,7 @@ public class Inspector {
 
 				String returnType = methods[count].getReturnType().getSimpleName();
 				// Prints out return type (if it does return anything)
-				if(returnType.equals("void")) System.out.println("\n\t\tbj.getClass().isInterface()\tReturn Type: \t\tNo return (void)");
+				if(returnType.equals("void")) System.out.println("\n\t\t\tReturn Type: \t\tNo return (void)");
 				else System.out.println("\n\t\t\tReturn Type: \t\t" + methods[count].getReturnType().getSimpleName());
 
 
@@ -182,7 +181,7 @@ public class Inspector {
 	 * Prints the name and the parameter type and modifiers of
 	 * the constructors of objToInspect
 	 */
-	private void getConstruc(Constructor[] construc) {
+	public void getConstruc(Constructor[] construc) {
 
 		System.out.println("______________________________________________\nConstructors:");
 
@@ -210,10 +209,7 @@ public class Inspector {
 		}
 	}
 
-	private void getFields(Field[] fields) throws IllegalArgumentException, IllegalAccessException {
-
-
-
+	public void getFields(Field[] fields) throws IllegalArgumentException, IllegalAccessException {
 
 		System.out.println("______________________________________________\nFields:");
 
@@ -258,11 +254,9 @@ public class Inspector {
 			}
 			else {
 
-
 				System.out.println("\t\t\t\t- " + fieldName + " -");
-				System.out.print("\t\t\tType: \t\t\t" + fields[count].getType());
+				System.out.print("\t\t\tType: \t\t\t" + fields[count].getType().getTypeName());
 				System.out.print("\n\t\t\tModifiers: \t\t" + Modifier.toString(fields[count].getModifiers()));
-
 
 				/*
 				 * If recursiveFlag is true, perform recursive check on fields which are objects
@@ -272,13 +266,12 @@ public class Inspector {
 					/*
 					 * Inspect object if it is a field
 					 */
+					
 
 				}
 				else {
-
 					System.out.print("\n\t\t\tValue: \t\t\t" + fields[count].get(objToInspect));
 					System.out.print("\n\t\t\tReference Value: \t" + fields[count].getDeclaringClass() + " " + System.identityHashCode(fields[count].get(objToInspect)));
-
 				}
 			}
 
@@ -292,15 +285,14 @@ public class Inspector {
 	 */
 	private void travInher() throws Exception {
 
-
-
 		if(!superClass.getSimpleName().equals("Object")) {
 			
 			Class supClass = null;
 			System.out.println("*****Superclass: " + superClass + "*****");
 
 			supClass = Class.forName(superClass.getName());
-
+			this.currClass = supClass;
+			
 			getSupName(null, supClass);
 			getInterfName(null, supClass);
 			Method[] methods = supClass.getDeclaredMethods();
